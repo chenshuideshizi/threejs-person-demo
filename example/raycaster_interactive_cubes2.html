@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>raycaster_interactive_cubes</title>
+		<title>three.js webgl - interactive cubes</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
 			* {
 				padding: 0;
-				margin: 0;
+			}
+			canvas {
+				margin: 0 auto;
 			}
 		</style>
 	</head>
 	<body>
 		<script type="module">
+
 			import * as THREE from './libs/three.module.js';
+
+			const canvasWidth = 600
+			const canvasHeight = 400
 
 			let container;
 			let camera, scene, raycaster, renderer;
 
 			let INTERSECTED;
+			let theta = 0;
 
 			const pointer = new THREE.Vector2();
 			const radius = 100;
@@ -31,52 +38,35 @@
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 
-				// 创建相机
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera = new THREE.PerspectiveCamera( 70, canvasWidth / canvasHeight, 1, 10000 );
 
-				// 创建场景
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xf0f0f0 );
 
-				// 创建光
 				const light = new THREE.DirectionalLight( 0xffffff, 1 );
 				light.position.set( 1, 1, 1 ).normalize();
 				scene.add( light );
 
-				/**
-				 * 添加格子辅助线
-				 */
-				// const grid = new THREE.GridHelper(400, 30, 0xcccccc, 0xcccccc);
-				// scene.add(grid);
-
-				// 创建几何
-
 
 				function createCube() {
 					const geometry = new THREE.BoxGeometry( 20, 20, 20 );
-					const material = new THREE.MeshLambertMaterial( { color:   0xff0000 } )
-					const cube = new THREE.Mesh( geometry,  material );
+					const material = new THREE.MeshLambertMaterial( { color:  0xffffff })
+					const cube = new THREE.Mesh( geometry,  material);
 					return cube
 				}
 
 				const cube1 = createCube()
 				scene.add(cube1)
 
-
-
-	
-
 				raycaster = new THREE.Raycaster();
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( canvasWidth, canvasHeight );
 				container.appendChild( renderer.domElement );
 
 
-				document.addEventListener( 'mousemove', onPointerMove );
-
-				//
+				renderer.domElement.addEventListener( 'mousemove', onPointerMove );
 
 				window.addEventListener( 'resize', onWindowResize );
 
@@ -84,29 +74,39 @@
 
 			function onWindowResize() {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.aspect = canvasWidth / canvasHeight;
 				camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( canvasWidth, canvasHeight );
+
 			}
 
 			function onPointerMove( event ) {
-				pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-				pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+				pointer.x = ( event.offsetX / canvasWidth) * 2 - 1;
+				pointer.y = - ( event.offsetY /canvasHeight ) * 2 + 1;
 
 			}
 
 			//
 
 			function animate() {
+
 				requestAnimationFrame( animate );
+
 				render();
+
 			}
 
 			function render() {
-				// camera.lookAt( scene.position );
-				// camera.lookAt(100, 100, 100)
-				camera.position.z = 5
+
+				theta += 0.1;
+
+				camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+				camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+				camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
+				camera.lookAt( scene.position );
+
 				camera.updateMatrixWorld();
 
 				// find intersections
