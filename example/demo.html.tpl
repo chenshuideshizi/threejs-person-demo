@@ -55,6 +55,10 @@
 				const cube1 = createCube()
 				scene.add(cube1)
 
+                // 使用 shapeUtils 创建物体
+
+                
+
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
