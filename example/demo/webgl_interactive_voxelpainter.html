@@ -1,178 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>three.js webgl - interactive - voxel painter</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	</head>
-	<body>
-		<script type="module">
-			import * as THREE from '../libs/three.module.js';
 
+<head>
+	<title>three.js webgl - interactive - voxel painter</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
 
-			
-			let camera, scene, renderer;
-			let plane;
-			let pointer, raycaster, isShiftDown = false;
+<body>
+	<script type="module">
+		import * as THREE from '../libs/three.module.js';
 
-			let rollOverMesh, rollOverMaterial;
-			let cubeGeo, cubeMaterial;
+		class ThreeClass {
+			constructor() {
+				this.camera = null
+				this.scene = null
+				this.renderer = null
+				this.raycaster = null
+				this.rollOverMesh = null // 标定中的几何体
+				this.isShiftDown = false // 是否按下 shift键
+				this.objects = [] // plane 对象及所有添加的物体
+				this.pointer = null // 当前鼠标的点
+				this.cubeGeo = null // 要添加几何体
+				this.cubeMaterial = null // 要添加的材质
 
-			const objects = [];
+				this.init()
+				this.initEvent()
+				this.render();
 
-			init();
-			render();
-
-			function init() {
+			}
+			render() {
+				this.renderer.render(this.scene, this.camera);
+			}
+			init() {
 				// 相机
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.set( 500, 800, 1300 );
-				camera.lookAt( 0, 0, 0 );
+				const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+				camera.position.set(500, 800, 1300);
+				camera.lookAt(0, 0, 0);
+				this.camera = camera
 
 				// 场景
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xf0f0f0 );
+				const scene = new THREE.Scene();
+				scene.background = new THREE.Color(0xf0f0f0);
+				this.scene = scene
 
-				// roll-over helpers
-				const rollOverGeo = new THREE.BoxGeometry( 50, 50, 50 );
-				rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
-				rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
-				scene.add( rollOverMesh );
+				// 标定中的物体
+				const rollOverGeo = new THREE.BoxGeometry(50, 50, 50);
+				const rollOverMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true });
+				this.rollOverMesh = new THREE.Mesh(rollOverGeo, rollOverMaterial);
+				scene.add(this.rollOverMesh);
 
 				// cubes
-				cubeGeo = new THREE.BoxGeometry( 50, 50, 50 );
-				cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c } );
+				this.cubeGeo = new THREE.BoxGeometry(50, 50, 50);
+				this.cubeMaterial = new THREE.MeshLambertMaterial({ color: 0xfeb74c });
 
 				// grid 网格
-				const gridHelper = new THREE.GridHelper( 1000, 20 );
-				scene.add( gridHelper );
+				const gridHelper = new THREE.GridHelper(1000, 20);
+				scene.add(gridHelper);
 
-				//
-				raycaster = new THREE.Raycaster();
-				pointer = new THREE.Vector2();
+
+				this.raycaster = new THREE.Raycaster();
+				this.pointer = new THREE.Vector2();
 
 				// 隐藏的平面
-				const geometry = new THREE.PlaneGeometry( 1000, 1000 );
-				geometry.rotateX( - Math.PI / 2 );
-				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
-				scene.add( plane );
-
-				objects.push( plane );
+				const geometry = new THREE.PlaneGeometry(1000, 1000);
+				geometry.rotateX(- Math.PI / 2);
+				this.plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ visible: false }));
+				scene.add(this.plane);
+				this.objects.push(this.plane);
 
 				// lights
+				const ambientLight = new THREE.AmbientLight(0x606060);
+				scene.add(ambientLight);
 
-				const ambientLight = new THREE.AmbientLight( 0x606060 );
-				scene.add( ambientLight );
+				const directionalLight = new THREE.DirectionalLight(0xffffff);
+				directionalLight.position.set(1, 0.75, 0.5).normalize();
+				scene.add(directionalLight);
 
-				const directionalLight = new THREE.DirectionalLight( 0xffffff );
-				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
-				scene.add( directionalLight );
-
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
-				document.addEventListener( 'pointermove', onPointerMove );
-				document.addEventListener( 'pointerdown', onPointerDown );
-				document.addEventListener( 'keydown', onDocumentKeyDown );
-				document.addEventListener( 'keyup', onDocumentKeyUp );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize );
-
+				// 渲染器
+				this.renderer = new THREE.WebGLRenderer({ antialias: true });
+				this.renderer.setPixelRatio(window.devicePixelRatio);
+				this.renderer.setSize(window.innerWidth, window.innerHeight);
+				document.body.appendChild(this.renderer.domElement);
 			}
+			initEvent() {
+				document.addEventListener('pointermove', onPointerMove.bind(this));
+				document.addEventListener('pointerdown', onPointerDown.bind(this));
+				document.addEventListener('keydown', onDocumentKeyDown.bind(this));
+				document.addEventListener('keyup', onDocumentKeyUp.bind(this));
+				window.addEventListener('resize', onWindowResize.bind(this));
 
-			function onWindowResize() {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-				render();
-
-			}
-
-			function onPointerMove( event ) {
-
-				pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
-
-				raycaster.setFromCamera( pointer, camera );
-
-				const intersects = raycaster.intersectObjects( objects, false );
-
-				if ( intersects.length > 0 ) {
-
-					const intersect = intersects[ 0 ];
-
-					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
-					rollOverMesh.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
-
+				function onWindowResize() {
+					this.camera.aspect = window.innerWidth / window.innerHeight;
+					this.camera.updateProjectionMatrix();
+					this.renderer.setSize(window.innerWidth, window.innerHeight);
+					this.render();
 				}
 
-				render();
+				function onPointerMove(event) {
+					this.pointer.set((event.clientX / window.innerWidth) * 2 - 1, - (event.clientY / window.innerHeight) * 2 + 1);
+					this.raycaster.setFromCamera(this.pointer, this.camera);
+					const intersects = this.raycaster.intersectObjects(this.objects, false);
+					if (intersects.length > 0) {
+						const intersect = intersects[0];
+						this.rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
+						this.rollOverMesh.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+					}
+					this.render();
+				}
 
-			}
+				function onPointerDown(event) {
+					this.pointer.set((event.clientX / window.innerWidth) * 2 - 1, - (event.clientY / window.innerHeight) * 2 + 1);
+					this.raycaster.setFromCamera(this.pointer, this.camera);
+					const intersects = this.raycaster.intersectObjects(this.objects, false);
 
-			function onPointerDown( event ) {
-				pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
-				raycaster.setFromCamera( pointer, camera );
-				const intersects = raycaster.intersectObjects( objects, false );
-
-				if ( intersects.length > 0 ) {
-
-					const intersect = intersects[ 0 ];
-
-					// delete cube
-
-					if ( isShiftDown ) {
-
-						if ( intersect.object !== plane ) {
-
-							scene.remove( intersect.object );
-
-							objects.splice( objects.indexOf( intersect.object ), 1 );
-
+					if (intersects.length > 0) {
+						const intersect = intersects[0];
+						if (this.isShiftDown) {
+							// 删除物体
+							if (intersect.object !== this.plane) {
+								this.scene.remove(intersect.object);
+								this.objects.splice(this.objects.indexOf(intersect.object), 1);
+							}
+						} else {
+							// 添加物体
+							const voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
+							voxel.position.copy(intersect.point).add(intersect.face.normal);
+							voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+							this.scene.add(voxel);
+							this.objects.push(voxel);
 						}
-
-						// create cube
-
-					} else {
-
-						const voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-						voxel.position.copy( intersect.point ).add( intersect.face.normal );
-						voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
-						scene.add( voxel );
-
-						objects.push( voxel );
-
+						this.render();
 					}
 
-					render();
+				}
 
+				function onDocumentKeyDown(event) {
+					switch (event.keyCode) {
+						case 16: 
+							this.isShiftDown = true; 
+							break;
+					}
+				}
+
+				function onDocumentKeyUp(event) {
+					switch (event.keyCode) {
+						case 16: 
+							this.isShiftDown = false; 
+							break;
+					}
 				}
 
 			}
+		}
 
-			function onDocumentKeyDown( event ) {
-				switch ( event.keyCode ) {
-					case 16: isShiftDown = true; break;
-				}
-			}
+		new ThreeClass()
 
-			function onDocumentKeyUp( event ) {
-				switch ( event.keyCode ) {
-					case 16: isShiftDown = false; break;
-				}
-			}
+	</script>
 
-			function render() {
-				renderer.render( scene, camera );
-			}
+</body>
 
-		</script>
-
-	</body>
 </html>
