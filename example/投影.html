@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - arraycamera</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+	<body>
+
+		<script type="module">
+			import * as THREE from './libs/three.module.js';
+			import { OrbitControls } from './jsm/controls/OrbitControls.js'
+
+			let camera, scene, renderer;
+			let mesh;
+			const AMOUNT = 1;
+			let controls
+
+			init();
+			animate();
+
+			function init() {
+				const ASPECT_RATIO = window.innerWidth / window.innerHeight;
+
+				const WIDTH = ( window.innerWidth / AMOUNT ) * window.devicePixelRatio;
+				const HEIGHT = ( window.innerHeight / AMOUNT ) * window.devicePixelRatio;
+
+				let x = 0, y= 0;
+				camera = new THREE.PerspectiveCamera( 40, ASPECT_RATIO, 0.1, 10 );
+				camera.viewport = new THREE.Vector4( Math.floor( x * WIDTH ), Math.floor( y * HEIGHT ), Math.ceil( WIDTH ), Math.ceil( HEIGHT ) );
+				camera.position.x = ( x / AMOUNT ) - 0.5;
+				camera.position.y = 0.5 - ( y / AMOUNT );
+				camera.position.z = 1.5;
+				camera.position.multiplyScalar( 2 );
+				camera.lookAt( 0, 0, 0 );
+				camera.updateMatrixWorld();
+
+
+				// 场景
+				scene = new THREE.Scene();
+				scene.add( new THREE.AmbientLight( 0x222244 ) );
+
+				// 定向光
+				const light = new THREE.DirectionalLight();
+				light.position.set( 0.5, 0.5, 1 );
+				light.castShadow = true;
+				light.shadow.camera.zoom = 4; // tighter shadow map
+				scene.add( light );
+
+				// 平面
+				const geometryBackground = new THREE.PlaneGeometry( 100, 100 );
+				const materialBackground = new THREE.MeshPhongMaterial( { color: 0x000066 } );
+
+				const background = new THREE.Mesh( geometryBackground, materialBackground );
+				background.receiveShadow = true;
+				background.position.set( 0, 0, - 1 );
+				scene.add( background );
+
+
+				const geometryCylinder = new THREE.CylinderGeometry( 0.5, 0.5, 1, 32 );
+				const materialCylinder = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+
+				mesh = new THREE.Mesh( geometryCylinder, materialCylinder );
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+				scene.add( mesh );
+
+				// 渲染器
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
+				
+				// 控制器
+				controls = new OrbitControls( camera, renderer.domElement );
+			}
+
+			function animate() {
+				controls.update()
+				renderer.render( scene, camera );
+				requestAnimationFrame( animate );
+			}
+
+		</script>
+
+	</body>
+</html>
