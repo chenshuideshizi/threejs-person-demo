@@ -86,11 +86,13 @@
 			initEvent() {
 				document.addEventListener('pointermove', onPointerMove.bind(this));
 				document.addEventListener('pointerdown', onPointerDown.bind(this));
+
 				document.addEventListener('keydown', onDocumentKeyDown.bind(this));
 				document.addEventListener('keyup', onDocumentKeyUp.bind(this));
+				
 				window.addEventListener('resize', onWindowResize.bind(this));
 
-
+				// Resize 事件回调 
 				function onWindowResize() {
 					this.camera.aspect = window.innerWidth / window.innerHeight;
 					this.camera.updateProjectionMatrix();
@@ -98,6 +100,7 @@
 					this.render();
 				}
 
+				// 鼠标移动事件回调
 				function onPointerMove(event) {
 					this.pointer.set((event.clientX / window.innerWidth) * 2 - 1, - (event.clientY / window.innerHeight) * 2 + 1);
 					this.raycaster.setFromCamera(this.pointer, this.camera);
@@ -110,6 +113,7 @@
 					this.render();
 				}
 
+				// 鼠标点击事件回调
 				function onPointerDown(event) {
 					this.pointer.set((event.clientX / window.innerWidth) * 2 - 1, - (event.clientY / window.innerHeight) * 2 + 1);
 					this.raycaster.setFromCamera(this.pointer, this.camera);
@@ -136,6 +140,7 @@
 
 				}
 
+				// 按下键盘事件回调
 				function onDocumentKeyDown(event) {
 					switch (event.keyCode) {
 						case 16: 
@@ -144,6 +149,7 @@
 					}
 				}
 
+				// 松开键盘事件回调
 				function onDocumentKeyUp(event) {
 					switch (event.keyCode) {
 						case 16: 
