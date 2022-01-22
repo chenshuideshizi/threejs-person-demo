@@ -11,7 +11,7 @@
 
 		import * as THREE from '../libs/three.module.js';
 
-		import { OrbitControls } from '../libs/controls/OrbitControls.js';
+		import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 
 		let renderer, scene, camera;
 		let controls, group;
@@ -46,30 +46,32 @@
 			controls = new OrbitControls( camera, renderer.domElement );
 			controls.enableRotate = true;
 
-			// add sprites
-
-			const sprite1 = new THREE.Sprite( new THREE.SpriteMaterial( { color: '#69f' } ) );
+			// 组中 黄色物体
+			const sprite1 = new THREE.Sprite( new THREE.SpriteMaterial( { color: 'yellow' } ) );
 			sprite1.position.set( 6, 5, 5 );
 			sprite1.scale.set( 2, 5, 1 );
 			group.add( sprite1 );
 
-			const sprite2 = new THREE.Sprite( new THREE.SpriteMaterial( { color: '#69f', sizeAttenuation: false } ) );
+			// 组中 绿色物体
+			const sprite2 = new THREE.Sprite( new THREE.SpriteMaterial( { color: 'green', sizeAttenuation: false } ) ); // SpriteMaterial： 精灵的大小是否会被相机深度变化
 			sprite2.material.rotation = Math.PI / 3 * 4;
 			sprite2.position.set( 8, - 2, 2 );
 			sprite2.center.set( 0.5, 0 );
 			sprite2.scale.set( .1, .5, .1 );
 			group.add( sprite2 );
 
+			// 组：包含 黄色物体、绿色物体
 			const group2 = new THREE.Object3D();
 			group2.scale.set( 1, 2, 1 );
 			group2.position.set( - 5, 0, 0 );
 			group2.rotation.set( Math.PI / 2, 0, 0 );
 			group.add( group2 );
 
-			const sprite3 = new THREE.Sprite( new THREE.SpriteMaterial( { color: '#69f' } ) );
+			// 蓝色物体
+			const sprite3 = new THREE.Sprite( new THREE.SpriteMaterial( { color: 'blue' } ) );
 			sprite3.position.set( 0, 2, 5 );
 			sprite3.scale.set( 10, 2, 3 );
-			sprite3.center.set( - 0.1, 0 );
+			sprite3.center.set( - 0.1, 0 ); // 设置物体中心点
 			sprite3.material.rotation = Math.PI / 3;
 			group2.add( sprite3 );
 
@@ -79,54 +81,40 @@
 		}
 
 		function animate() {
-
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
-
 		}
 
+		// 窗口大小改变事件
 		function onWindowResize() {
-
 			camera.aspect = window.innerWidth / window.innerHeight;
 			camera.updateProjectionMatrix();
-
 			renderer.setSize( window.innerWidth, window.innerHeight );
-
 		}
 
+		//  鼠标移动事件
 		function onPointerMove( event ) {
-
 			if ( selectedObject ) {
-
-				selectedObject.material.color.set( '#69f' );
+				selectedObject.material.color.set( selectedObject.currentColor );
 				selectedObject = null;
-
 			}
-
 			pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 			pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 			raycaster.setFromCamera( pointer, camera );
-
 			const intersects = raycaster.intersectObject( group, true );
 
 			if ( intersects.length > 0 ) {
-
 				const res = intersects.filter( function ( res ) {
-
 					return res && res.object;
-
-				} )[ 0 ];
+				} )[0];
 
 				if ( res && res.object ) {
-
 					selectedObject = res.object;
-					selectedObject.material.color.set( '#f00' );
-
+					selectedObject.currentColor = selectedObject.material.color.getHex() // 保存物体原有的颜色
+					selectedObject.material.color.set( '#f00' ); // 给物体新的颜色
 				}
-
 			}
-
 		}
 
 	</script>

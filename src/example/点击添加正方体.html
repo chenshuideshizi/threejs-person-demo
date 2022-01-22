@@ -108,7 +108,7 @@
 					if (intersects.length > 0) {
 						const intersect = intersects[0];
 						this.rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
-						this.rollOverMesh.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+						this.rollOverMesh.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25); // 重点1，实现目标物体在一个网格中
 					}
 					this.render();
 				}
@@ -131,7 +131,7 @@
 							// 添加物体
 							const voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
 							voxel.position.copy(intersect.point).add(intersect.face.normal);
-							voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+							voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25); // 重点2， 实现添加的物物体在一个网格中
 							this.scene.add(voxel);
 							this.objects.push(voxel);
 						}
