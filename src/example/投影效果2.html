@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        // 参考： https://threejs.org/docs/index.html#api/en/lights/shadows/DirectionalLightShadow
+
+        import * as THREE from '../libs/three.module.js';
+        import { OrbitControls } from '../jsm/controls/OrbitControls.js'
+
+        const scene = new THREE.Scene();
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer();
+        renderer.shadowMap.enabled = true;
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        const camera = new THREE.PerspectiveCamera( 45, window.innerWidth/ window.innerHeight, 0.1, 10000 );
+        camera.lookAt( 0, 0, 0 );
+        camera.position.set(10, 10, 10)
+        scene.add( camera );
+
+        document.body.appendChild( renderer.domElement );
+
+        const controls = new OrbitControls( camera, renderer.domElement );
+
+        // 直射光
+        const light = new THREE.DirectionalLight( 0xffffff, 1, 100 );
+        light.position.set( 1, 1, 0 );
+        light.castShadow = true; 
+        scene.add( light );
+
+        // 物体
+        const sphereGeometry = new THREE.SphereGeometry( 1, 12, 12 );
+        const sphereMaterial = new THREE.MeshStandardMaterial( { color: 'green'} );
+        const sphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
+        sphere.castShadow = true; 
+        sphere.receiveShadow = false; 
+        sphere.position.set(0, 1, 0)
+        scene.add( sphere );
+
+        // 平面
+        const planeGeometry = new THREE.BoxGeometry( 10, 0.1, 10 );
+        const planeMaterial = new THREE.MeshPhongMaterial( { color: 0x000066 } );
+        const planeMesh = new THREE.Mesh( planeGeometry, planeMaterial );
+        planeMesh.receiveShadow = true; 
+        planeMesh.position.set( 0, -0.1, 0 );
+        scene.add( planeMesh );
+        // 相机 Helper
+        const cameraHelper = new THREE.CameraHelper( light.shadow.camera );
+        scene.add( cameraHelper );
+
+        // 网格 Helper
+        const gridHelper = new THREE.GridHelper(1000, 100 );
+        scene.add( gridHelper );
+
+        animate()
+        function animate() {
+            controls.update()
+            renderer.render( scene, camera );
+            requestAnimationFrame( animate );
+        }
+    </script>
+    
+</body>
+</html>
+
